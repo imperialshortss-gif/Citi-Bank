@@ -13,9 +13,9 @@
   "icons": [
     {
       "src": "/citi-icon.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
