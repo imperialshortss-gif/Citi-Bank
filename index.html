@@ -44,7 +44,7 @@ footer{height:20px}
 <div id="tab-transactions" class="hidden"><div class="toolbar"><h2>Transactions</h2><button class="btn small" id="addTransaction">Add transaction</button></div><div class="table-wrap" id="transactionsTable"></div></div>
 <div id="tab-settings" class="hidden"><h2>Admin settings</h2><div class="notice">Your settings and account records are saved in this browser on this device.</div><div class="field"><label>Admin username</label><input id="settingsUsername" autocomplete="username"></div><div class="form-actions"><button class="btn" id="saveUsername">Save username</button><button class="btn secondary" id="changePassword">Change password</button><button class="btn secondary" id="exportData">Export account data</button><button class="btn danger" id="resetData">Reset account data</button></div></div>
 </section></div></main></div>
-<div id="authView" class="auth-screen hidden"><div class="auth-card"><div class="auth-brand">citi</div><h1 id="authTitle">Admin login</h1><p id="authDescription">Sign in to manage your banking dashboard.</p><form id="authForm"><div class="field"><label for="authUser">Username</label><input id="authUser" required autocomplete="username"></div><div class="field"><label for="authPass">Password</label><input id="authPass" required type="password" autocomplete="current-password"></div><div id="confirmWrap" class="field hidden"><label for="authConfirm">Confirm password</label><input id="authConfirm" type="password" autocomplete="new-password"></div><button class="btn" style="width:100%" id="authSubmit" type="submit">Sign in</button></form><div style="margin-top:10px"><button class="btn secondary" style="width:100%" id="createAccess">Create admin access</button></div><div style="margin-top:10px"><button class="btn secondary" style="width:100%" id="cancelAuth">Back to banking</button></div></div></div>
+<div id="authView" class="auth-screen hidden"><div class="auth-card"><div class="auth-brand">citi</div><h1 id="authTitle">Admin login</h1><p id="authDescription">Sign in to manage your banking dashboard.</p><form id="authForm"><div class="field"><label for="authUser">Username</label><input id="authUser" required autocomplete="username"></div><div class="field"><label for="authPass">Password</label><input id="authPass" required type="password" autocomplete="current-password"></div><button class="btn" style="width:100%" id="authSubmit" type="submit">Sign in</button></form><div style="margin-top:10px"><button class="btn secondary" style="width:100%" id="cancelAuth">Back to banking</button></div></div></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="dialog"><div class="dialog-head"><h2 id="modalTitle">Details</h2><button class="x" id="modalClose" aria-label="Close">×</button></div><div id="modalBody"></div></div></div><div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -115,25 +115,16 @@ function tableTx(rows,actions){return rows.length?'<table><thead><tr><th>Date</t
 function renderAll(){renderHome();if(!document.getElementById('adminView').classList.contains('hidden'))renderAdmin()}
 function showCustomer(){document.getElementById('customerView').classList.remove('hidden');document.getElementById('adminView').classList.add('hidden');document.getElementById('authView').classList.add('hidden');document.getElementById('adminEntry').classList.remove('hidden');renderHome()}
 function showAdmin(){document.getElementById('customerView').classList.add('hidden');document.getElementById('adminView').classList.remove('hidden');document.getElementById('authView').classList.add('hidden');document.getElementById('adminEntry').classList.add('hidden');renderAdmin()}
-let authMode='login';
-function authScreen(mode='login'){authMode=mode;document.getElementById('customerView').classList.add('hidden');document.getElementById('adminView').classList.add('hidden');document.getElementById('authView').classList.remove('hidden');document.getElementById('authTitle').textContent=authMode==='setup'?'Create admin access':'Admin login';document.getElementById('authDescription').textContent=authMode==='setup'?'Create your Citi administrator username and password.':'Sign in with your Citi administrator username and password.';document.getElementById('confirmWrap').classList.toggle('hidden',authMode!=='setup');document.getElementById('authSubmit').textContent=authMode==='setup'?'Create admin access':'Sign in';document.getElementById('createAccess').classList.toggle('hidden',authMode==='setup');if(authMode==='setup')document.getElementById('authUser').value='admin';document.getElementById('authPass').value='';document.getElementById('authConfirm').value=''}
+function authScreen(){document.getElementById('customerView').classList.add('hidden');document.getElementById('adminView').classList.add('hidden');document.getElementById('authView').classList.remove('hidden');document.getElementById('authTitle').textContent='Admin login';document.getElementById('authDescription').textContent='Sign in with your Citi administrator username and password.';document.getElementById('authSubmit').textContent='Sign in';document.getElementById('authUser').value='admin';document.getElementById('authPass').value=''}
 function loginEmail(username){return username.trim().toLowerCase()+'@citi-login.example.com'}
 async function connectAdmin(user){await loadCloudData(user);showAdmin();showToast('Signed in securely.')}
 document.getElementById('authForm').addEventListener('submit',async e=>{e.preventDefault();const username=document.getElementById('authUser').value.trim(),pass=document.getElementById('authPass').value;if(!username||pass.length<8){showToast('Enter a username and a password of at least 8 characters.');return}
- const email=loginEmail(username);const submit=document.getElementById('authSubmit');submit.disabled=true;
+ const submit=document.getElementById('authSubmit');submit.disabled=true;
  try{
-  if(authMode==='setup'){
-   if(pass!==document.getElementById('authConfirm').value)throw Error('Passwords do not match.');
-   const {data:result,error}=await citiDb.auth.signUp({email,password:pass,options:{data:{username}}});if(error)throw error;
-   if(!result.session){showToast('Account created. Email confirmation is required by the current Supabase settings.');return}
-   await connectAdmin(result.user);
-  }else{
-   const {data:result,error}=await citiDb.auth.signInWithPassword({email,password:pass});if(error)throw error;
-   await connectAdmin(result.user);
-  }
+  const {data:result,error}=await citiDb.auth.signInWithPassword({email:loginEmail(username),password:pass});if(error)throw error;
+  await connectAdmin(result.user);
  }catch(err){showToast(err.message||'Unable to authenticate.')}finally{submit.disabled=false}
 });
-document.getElementById('createAccess').onclick=()=>authScreen('setup');
 document.getElementById('adminEntry').onclick=authScreen;document.getElementById('cancelAuth').onclick=showCustomer;document.getElementById('backHome').onclick=showCustomer;document.getElementById('logout').onclick=async()=>{await citiDb.auth.signOut();supabaseUser=null;showCustomer()};
 document.getElementById('modalClose').onclick=closeModal;document.getElementById('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');['overview','accounts','transactions','settings'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==b.dataset.tab));renderAdmin()}));
