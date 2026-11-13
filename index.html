@@ -130,7 +130,7 @@ function renderHome(){
  document.getElementById('sidebarCustomerName').textContent=data.owner||'Customer';
  const primary=data.accounts[0];
  document.getElementById('primaryBalance').innerHTML=primary
-  ? '<div class="balance-card-shield">✦</div><div class="balance-card-main"><p class="balance-label">AVAILABLE BALANCE</p><div class="balance-amount">'+money(total())+'</div><p class="balance-caption">'+(data.accounts.length>1?'Combined balance across '+data.accounts.length+' accounts':'Your available account balance')+'</p></div><div class="balance-card-account"><span>'+(data.accounts.length>1?'PRIMARY ACCOUNT':'ACCOUNT TYPE')+'</span><strong>'+esc(primary.type)+' Account</strong><span class="masked-account">•••• •••• '+esc(primary.number)+'</span><span class="account-status">Active</span></div>'
+  ? '<div class="balance-card-shield">✦</div><div class="balance-card-main"><p class="balance-label">AVAILABLE BALANCE</p><div class="balance-amount">'+money(total())+'</div><div class="balance-card-account"><strong>'+esc(primary.type)+' Account</strong><span class="masked-account">•••• •••• '+esc(primary.number)+'</span><span class="account-status">Active</span></div>'
   : '<div class="balance-card-main"><p class="balance-label">AVAILABLE BALANCE</p><div class="balance-amount">'+money(0)+'</div><p class="balance-caption">No account is currently linked to your profile</p></div>';
  const monthly=data.transactions.filter(t=>{const d=new Date(t.date+'T12:00:00');return d.getMonth()===month&&d.getFullYear()===year});
  const deposits=monthly.filter(t=>t.kind==='credit').reduce((n,t)=>n+Number(t.amount),0);
