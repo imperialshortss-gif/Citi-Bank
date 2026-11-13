@@ -6,24 +6,15 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#063b66",
-  "theme_color": "#063b66",
+  "background_color": "#07588e",
+  "theme_color": "#07588e",
   "icons": [
     {
-      "src": "/citi-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/citi-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/citi-icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]
