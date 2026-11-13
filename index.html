@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#056dae">
+<title>Citi | Personal Banking Workspace</title>
+<style>
+:root{--blue:#056dae;--navy:#073b66;--ink:#172b3a;--muted:#667887;--line:#e4ebf0;--bg:#f4f7fa;--red:#ed1c24}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{height:76px;background:var(--blue);display:flex;align-items:center;justify-content:space-between;padding:0 max(5vw,24px);color:#fff;box-shadow:0 2px 8px #092d4c22}
+.brand{font-size:34px;font-weight:700;letter-spacing:-2px;color:white;position:relative;line-height:1}.arc{position:absolute;width:48px;height:18px;border-top:5px solid var(--red);border-radius:50% 50% 0 0;top:-8px;left:27px;transform:rotate(-8deg)}
+.header-right{font-size:13px;opacity:.9}.shell{max-width:1180px;margin:34px auto;padding:0 22px}
+.welcome{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:24px}.eyebrow{color:var(--blue);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px}
+h1{font-size:28px;margin:7px 0 0}.date{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;box-shadow:0 3px 14px #153b5510}
+.balance{background:linear-gradient(125deg,#075b97,#087bbd);color:#fff;border:0;min-height:220px;display:flex;flex-direction:column;justify-content:space-between}
+.card-label{font-size:13px;opacity:.85}.amount{font-size:38px;font-weight:700;letter-spacing:-1px;margin:12px 0}.account{font-size:13px;opacity:.86}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.action{border:1px solid #ffffff70;border-radius:7px;padding:10px 16px;color:white;background:#ffffff18;font-weight:700;font-size:13px;cursor:pointer}.action:hover{background:#ffffff30}
+h2{font-size:18px;margin:0 0 18px}.muted{color:var(--muted);font-size:13px}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.quick button{background:#f7fafc;border:1px solid var(--line);border-radius:9px;padding:17px;text-align:left;cursor:pointer;color:var(--ink);font-weight:700}.quick button span{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:6px}
+.transactions{margin-top:20px}.tx{display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-top:1px solid var(--line);gap:14px}.tx:first-of-type{border-top:0}.tx-name{font-weight:700;font-size:14px}.tx-meta{font-size:12px;color:var(--muted);margin-top:5px}.tx-amount{font-weight:700;white-space:nowrap}.credit{color:#16804a}
+.side-stack{display:grid;gap:20px}.notice{background:#f0f7fc;border:1px solid #d7eaf7;border-radius:9px;padding:14px;color:#31566f;font-size:12px;line-height:1.5;margin-top:18px}
+footer{max-width:1180px;margin:26px auto 36px;padding:0 22px;color:#71818d;font-size:11px;line-height:1.5}
+.overlay{position:fixed;inset:0;background:linear-gradient(135deg,#064a7b,#087db9);display:grid;place-items:center;padding:20px;z-index:5}.welcome-card{background:white;width:min(440px,100%);padding:36px;border-radius:14px;box-shadow:0 20px 70px #002d4c55;text-align:center}.welcome-card .brand{display:inline-block;color:var(--blue);margin:10px 0 25px}.welcome-card h1{font-size:24px}.welcome-card p{color:var(--muted);font-size:14px;line-height:1.6}.enter{width:100%;padding:14px;border:0;border-radius:7px;background:var(--blue);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:14px}.fine{font-size:11px!important;margin-top:18px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#16384e;color:white;padding:12px 18px;border-radius:8px;font-size:13px;display:none;z-index:8}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.welcome{align-items:flex-start;flex-direction:column}.shell{margin-top:24px}.amount{font-size:32px}header{height:66px}.brand{font-size:30px}}
+</style>
+</head>
+<body>
+<header><div class="brand">citi<span class="arc"></span></div><div class="header-right">Personal Banking Workspace</div></header>
+<main class="shell">
+<section class="welcome"><div><div class="eyebrow">Account overview</div><h1>Good morning</h1></div><div class="date" id="today"></div></section>
+<div class="grid">
+<div>
+<section class="card balance"><div><div class="card-label">Total available balance</div><div class="amount" id="balance">$248,650.75</div><div class="account">Everyday Checking · •••• 4821</div></div><div class="actions"><button class="action" onclick="notify('Transfer workspace opened')">Transfer</button><button class="action" onclick="notify('Payment workspace opened')">Pay bills</button><button class="action" onclick="notify('Account details selected')">Account details</button></div></section>
+<section class="card transactions"><h2>Recent activity</h2><div class="tx"><div><div class="tx-name">Northstar Office Supply</div><div class="tx-meta">Card purchase · Nov 13, 2026</div></div><div class="tx-amount">−$1,248.90</div></div><div class="tx"><div><div class="tx-name">Incoming transfer</div><div class="tx-meta">Transfer received · Nov 12, 2026</div></div><div class="tx-amount credit">+$8,500.00</div></div><div class="tx"><div><div class="tx-name">Harbor Utilities</div><div class="tx-meta">Online payment · Nov 11, 2026</div></div><div class="tx-amount">−$326.40</div></div><div class="tx"><div><div class="tx-name">Riverside Market</div><div class="tx-meta">Card purchase · Nov 10, 2026</div></div><div class="tx-amount">−$84.65</div></div><div class="tx"><div><div class="tx-name">Monthly interest</div><div class="tx-meta">Account credit · Nov 1, 2026</div></div><div class="tx-amount credit">+$42.18</div></div></section>
+</div>
+<aside class="side-stack">
+<section class="card"><h2>Quick access</h2><div class="quick"><button onclick="notify('Account activity selected')">Activity<span>Review transactions</span></button><button onclick="notify('Statements selected')">Statements<span>View monthly statements</span></button><button onclick="notify('Cards selected')">Cards<span>Manage your cards</span></button><button onclick="notify('Settings selected')">Settings<span>Workspace preferences</span></button></div></section>
+<section class="card"><h2>Account snapshot</h2><div class="tx"><div><div class="tx-name">Checking</div><div class="tx-meta">•••• 4821</div></div><div class="tx-amount">$248,650.75</div></div><div class="tx"><div><div class="tx-name">Savings</div><div class="tx-meta">•••• 1936</div></div><div class="tx-amount">$82,410.20</div></div><div class="tx"><div><div class="tx-name">Credit card</div><div class="tx-meta">•••• 7704</div></div><div class="tx-amount">$1,284.32</div></div><div class="notice">This is a fictional personal-use banking interface. Balances and activity are sample data; no bank account or payment network is connected.</div></section>
+</aside>
+</div>
+</main>
+<footer>Independent personal-use simulator. Not affiliated with, endorsed by, or connected to Citigroup or Citibank. Do not enter real banking credentials or financial information.</footer>
+<div class="overlay" id="welcome"><div class="welcome-card"><div class="brand">citi<span class="arc"></span></div><div class="eyebrow">Personal workspace</div><h1>Welcome back</h1><p>Open your private banking interface to review the sample account overview and activity.</p><button class="enter" onclick="document.getElementById('welcome').remove()">Open workspace</button><p class="fine">Personal-use simulator · Sample information only</p></div></div>
+<div class="toast" id="toast"></div>
+<script>
+document.getElementById('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+function notify(message){const t=document.getElementById('toast');t.textContent=message;t.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>t.style.display='none',2200)}
+</script>
+</body>
+</html>
