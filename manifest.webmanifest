@@ -3,7 +3,7 @@
   "name": "Citi Online",
   "short_name": "Citi",
   "description": "Citi Online account dashboard",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
@@ -11,11 +11,8 @@
   "background_color": "#07588e",
   "theme_color": "#07588e",
   "icons": [
-    {
-      "src": "/citi-icon.svg",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    {"src": "/citi-icon-192.png?v=3", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/citi-icon-512.png?v=3", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/citi-icon.svg?v=3", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
   ]
 }
