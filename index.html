@@ -175,7 +175,7 @@ document.getElementById('createCustomerBtn').onclick=()=>{
   e.preventDefault();const button=document.getElementById('saveCustomerBtn');button.disabled=true;button.textContent='Creating…';
   const body={fullName:document.getElementById('cuFullName').value,username:document.getElementById('cuUsername').value,password:document.getElementById('cuPassword').value,email:document.getElementById('cuEmail').value,phone:document.getElementById('cuPhone').value,address:document.getElementById('cuAddress').value,accountName:document.getElementById('cuAccountName').value,accountType:document.getElementById('cuAccountType').value,accountNumber:document.getElementById('cuAccountNumber').value,openingBalance:document.getElementById('cuBalance').value};
   try{const {data:result,error}=await citiDb.functions.invoke('create-customer',{body});if(error)throw error;if(result?.error)throw new Error(result.error);closeModal();showToast('Customer account created successfully.');await loadCustomers();}
-  catch(err){showToast(err.message||'Unable to create customer account.');button.disabled=false;button.textContent='Create Account'}
+  catch(err){let message=err?.message||'Unable to create customer account.';try{const response=err?.context;if(response&&typeof response.clone==='function'){const payload=await response.clone().json();if(payload?.error)message=payload.error;}}catch{}showToast(message);button.disabled=false;button.textContent='Create Account'}
  };
 };
 
