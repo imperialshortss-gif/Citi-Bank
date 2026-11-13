@@ -42,7 +42,7 @@ footer{height:20px}
 <div class="customer-main">
  <header class="customer-mobile-header"><a class="customer-logo" href="#"><span class="citi-word">citi</span></a><button id="mobileCustomerLogout" aria-label="Log out">↪</button></header>
  <main class="customer-content">
-  <section class="welcome customer-welcome"><div><h1 id="greeting">Welcome back</h1><p>Here's your account overview</p></div><div class="customer-date" id="today"></div></section>
+  <section class="welcome customer-welcome"><div><h1 id="greeting">Welcome back, Andrew Conwell</h1><p>Here's your account overview</p></div><div class="customer-date" id="today"></div></section>
   <section class="customer-balance-card" id="primaryBalance"></section>
   <section class="customer-summary-grid" id="customerSummary"></section>
   <section class="customer-transactions panel">
@@ -126,7 +126,7 @@ function accountOptions(selected=''){return data.accounts.map(a=>'<option value=
 function renderHome(){
  const now=new Date(),month=now.getMonth(),year=now.getFullYear();
  document.getElementById('today').textContent=now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
- const h=now.getHours();document.getElementById('greeting').textContent=(h<12?'Good morning':h<18?'Good afternoon':'Good evening')+', '+(data.owner||'Customer');
+ document.getElementById('greeting').textContent='Welcome back, Andrew Conwell';
  document.getElementById('sidebarCustomerName').textContent=data.owner||'Customer';
  const primary=data.accounts[0];
  document.getElementById('primaryBalance').innerHTML=primary
