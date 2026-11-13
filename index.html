@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#056dae">
 <title>Citi Personal Banking</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/citi-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/citi-icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Citi Online">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root{--blue:#056dae;--deep:#064b82;--navy:#073b63;--pale:#eaf5fb;--ink:#172b3a;--muted:#647887;--line:#dce6ec;--red:#e32636;--green:#168454;--shadow:0 5px 22px #12321a}
 *{box-sizing:border-box}body{margin:0;background:#f3f7fa;color:var(--ink);font:15px/1.5 Arial,Helvetica,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -252,5 +258,6 @@ document.getElementById('changePassword').onclick=()=>{openModal('Change admin p
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 document.getElementById('exportData').onclick=()=>download(JSON.stringify(data,null,2),'account-data-'+today()+'.json','application/json');
 document.getElementById('resetData').onclick=()=>{if(!confirm('Reset all account and transaction data to the initial account setup?'))return;data=defaultData();save();renderAll();showToast('Account data reset.')};
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {})); }
 showCustomer();
 </script></body></html>
