@@ -104,14 +104,14 @@ async function loadCloudData(user){
   if(isUntouchedSample){
    const {error:txDeleteError}=await citiDb.from('transactions').delete().eq('owner_id',user.id);if(txDeleteError)throw txDeleteError;
    const {error:accountDeleteError}=await citiDb.from('accounts').delete().eq('owner_id',user.id);if(accountDeleteError)throw accountDeleteError;
-   data={owner:user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
+   data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
    localStorage.setItem(KEY,JSON.stringify(data));
   }else{
-   data={owner:user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance)})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
+   data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance)})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
    localStorage.setItem(KEY,JSON.stringify(data));
   }
  }else{
-  data={owner:user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
+  data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
   localStorage.setItem(KEY,JSON.stringify(data));
  }
  renderAll();
