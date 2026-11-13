@@ -5,7 +5,7 @@ Deno.serve(async(req)=>{
  if(req.method==="OPTIONS") return new Response("ok",{headers:cors});
  if(req.method!=="POST") return reply({error:"Method not allowed"},405);
  const url=Deno.env.get("SUPABASE_URL")!, anon=Deno.env.get("SUPABASE_ANON_KEY")!, service=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
- const token=(req.headers.get("Authorization")||"").replace(/^Bearer\\s+/i,"");
+ const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
  if(!token) return reply({error:"Authentication required"},401);
  const auth=createClient(url,anon,{global:{headers:{Authorization:"Bearer "+token}}});
  const {data:{user:admin},error:authError}=await auth.auth.getUser();
@@ -16,7 +16,7 @@ Deno.serve(async(req)=>{
   const userId=String(b.userId||""), accountId=String(b.accountId||"");
   const fullName=String(b.fullName||"").trim(), username=String(b.username||"").trim().toLowerCase();
   const accountName=String(b.accountName||"").trim(), accountType=String(b.accountType||"").trim();
-  const balance=Number(b.balance), accountNumber=String(b.accountNumber||"").replace(/\\D/g,"");
+  const balance=Number(b.balance), accountNumber=String(b.accountNumber||"").replace(/\D/g,"");
   const email=username+"@citi-login.example.com";
   if(!userId||!accountId||!fullName||!username||!accountName||!accountType||!Number.isFinite(balance)||balance<0) return reply({error:"Complete all required fields with valid values."},400);
   if(!/^[a-z0-9._-]{3,32}$/.test(username)) return reply({error:"Username must be 3–32 characters and use letters, numbers, dots, underscores or hyphens."},400);
