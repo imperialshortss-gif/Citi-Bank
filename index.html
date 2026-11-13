@@ -57,12 +57,7 @@ const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 const uid=()=>crypto.randomUUID();
-const defaultData=()=>({owner:'Account holder',accounts:[{id:'checking',name:'Checking account',type:'Checking',number:'4821',balance:48250.75},{id:'savings',name:'Savings account',type:'Savings',number:'9036',balance:80200}],transactions:[
-{id:uid(),date:'2026-11-12',description:'Payroll deposit',type:'Deposit',accountId:'checking',amount:4850,kind:'credit'},
-{id:uid(),date:'2026-11-10',description:'Utility payment',type:'Bill payment',accountId:'checking',amount:186.42,kind:'debit'},
-{id:uid(),date:'2026-11-08',description:'Grocery purchase',type:'Card purchase',accountId:'checking',amount:92.18,kind:'debit'},
-{id:uid(),date:'2026-11-05',description:'Monthly savings',type:'Transfer',accountId:'checking',amount:500,kind:'debit'}
-]});
+const defaultData=()=>({owner:'Account holder',accounts:[],transactions:[]});
 let data;try{data=JSON.parse(localStorage.getItem(KEY))||defaultData()}catch{data=defaultData()}
 function save(){localStorage.setItem(KEY,JSON.stringify(data));if(supabaseUser){cloudSaveQueue=cloudSaveQueue.then(persistCloudData).catch(err=>{console.error(err);showToast('Cloud save failed: '+(err.message||'Please try again.'))})}}
 async function persistCloudData(){
@@ -79,13 +74,22 @@ async function loadCloudData(user){
  const {data:accounts,error:ae}=await citiDb.from('accounts').select('*').order('created_at',{ascending:true});if(ae)throw ae;
  if(accounts&&accounts.length){
   const {data:txs,error:te}=await citiDb.from('transactions').select('*').order('transaction_date',{ascending:false});if(te)throw te;
-  data={owner:user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance)})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
-  localStorage.setItem(KEY,JSON.stringify(data));
+  const isUntouchedSample=accounts.length===2
+   && accounts.some(a=>a.name==='Checking account'&&a.account_number_last4==='4821'&&Number(a.balance)===48250.75)
+   && accounts.some(a=>a.name==='Savings account'&&a.account_number_last4==='9036'&&Number(a.balance)===80200)
+   && (txs||[]).length===4
+   && ['Payroll deposit','Utility payment','Grocery purchase','Monthly savings'].every(name=>(txs||[]).some(t=>t.description===name));
+  if(isUntouchedSample){
+   const {error:txDeleteError}=await citiDb.from('transactions').delete().eq('owner_id',user.id);if(txDeleteError)throw txDeleteError;
+   const {error:accountDeleteError}=await citiDb.from('accounts').delete().eq('owner_id',user.id);if(accountDeleteError)throw accountDeleteError;
+   data={owner:user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
+   localStorage.setItem(KEY,JSON.stringify(data));
+  }else{
+   data={owner:user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance)})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
+   localStorage.setItem(KEY,JSON.stringify(data));
+  }
  }else{
-  data=JSON.parse(localStorage.getItem(KEY))||defaultData();
-  const idMap={};data.accounts.forEach(a=>{const old=a.id;a.id=crypto.randomUUID();idMap[old]=a.id});
-  data.transactions=data.transactions.map(t=>({...t,id:crypto.randomUUID(),accountId:idMap[t.accountId]||t.accountId}));
-  await persistCloudData();
+  data={owner:user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
   localStorage.setItem(KEY,JSON.stringify(data));
  }
  renderAll();
