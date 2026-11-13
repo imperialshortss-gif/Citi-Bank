@@ -1,11 +1,12 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#056dae">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07588e">
 <title>Citi Personal Banking</title>
-<link rel="manifest" href="/manifest.webmanifest">
-<link rel="icon" href="/citi-icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/citi-icon.svg">
+<link rel="manifest" href="/manifest.webmanifest?v=3">
+<link rel="icon" href="/citi-icon-192.png?v=3" type="image/png" sizes="192x192">
+<link rel="icon" href="/citi-icon.svg?v=3" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/citi-icon-192.png?v=3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Citi Online">
 <meta name="mobile-web-app-capable" content="yes">
@@ -280,6 +281,6 @@ if (installCustomerApp) installCustomerApp.addEventListener('click', async () =>
   deferredInstallPrompt = null;
   installCustomerApp.hidden = true;
 });
-if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {})); }
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js?v=3').catch(() => {})); }
 showCustomer();
 </script></body></html>
