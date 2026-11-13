@@ -6,10 +6,13 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
-  "background_color": "#07588e",
-  "theme_color": "#07588e",
+  "background_color": "#063b66",
+  "theme_color": "#063b66",
   "icons": [
     {
       "src": "/citi-icon.svg",
