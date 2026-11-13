@@ -1,9 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#063b66"/>
-  <circle cx="256" cy="256" r="158" fill="#087fbd"/>
-  <path d="M174 214h164c18 0 32 14 32 32v94c0 18-14 32-32 32H174c-18 0-32-14-32-32v-94c0-18 14-32 32-32Z" fill="#e8f7ff"/>
-  <path d="M142 244h228v-25c0-18-14-32-32-32H174c-18 0-32 14-32 32v25Z" fill="#b8e8ff"/>
-  <rect x="182" y="286" width="76" height="16" rx="8" fill="#087fbd"/>
-  <rect x="182" y="318" width="124" height="12" rx="6" fill="#087fbd" opacity=".72"/>
-  <circle cx="334" cy="300" r="16" fill="#e32636"/>
+  <rect width="512" height="512" rx="104" fill="#07588e"/>
+  <path d="M104 174 Q256 70 408 174" fill="none" stroke="#e32636" stroke-width="23" stroke-linecap="round"/>
+  <text x="256" y="326" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="194" font-weight="800" letter-spacing="-14" fill="#ffffff">citi</text>
+  <text x="256" y="385" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="29" font-weight="700" letter-spacing="7" fill="#d9edf8">ONLINE</text>
 </svg>
