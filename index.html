@@ -46,7 +46,7 @@ footer{height:20px}
  <div class="customer-sidebar-bottom"><div class="logged-in-label">LOGGED IN AS</div><strong id="sidebarCustomerName">Customer</strong><button id="customerLogout" class="customer-logout">↪ &nbsp;Log out</button></div>
 </aside>
 <div class="customer-main">
- <header class="customer-mobile-header"><a class="customer-logo" href="#"><span class="citi-word">citi</span></a><button id="mobileCustomerLogout" aria-label="Log out">↪</button></header>
+ <header class="customer-mobile-header"><a class="customer-logo" href="#"><span class="citi-word">citi</span></a><div style="display:flex;align-items:center;gap:8px"><button id="installCustomerApp" type="button" hidden>Install</button><button id="mobileCustomerLogout" aria-label="Log out">↪</button></div></header>
  <main class="customer-content">
   <section class="welcome customer-welcome"><div><h1 id="greeting">Welcome back</h1><p>Here's your account overview</p></div><div class="customer-date" id="today"></div></section>
   <section class="customer-balance-card" id="primaryBalance"></section>
@@ -258,6 +258,28 @@ document.getElementById('changePassword').onclick=()=>{openModal('Change admin p
 function download(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url)}
 document.getElementById('exportData').onclick=()=>download(JSON.stringify(data,null,2),'account-data-'+today()+'.json','application/json');
 document.getElementById('resetData').onclick=()=>{if(!confirm('Reset all account and transaction data to the initial account setup?'))return;data=defaultData();save();renderAll();showToast('Account data reset.')};
+let deferredInstallPrompt = null;
+const installCustomerApp = document.getElementById('installCustomerApp');
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (installCustomerApp) installCustomerApp.hidden = false;
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (installCustomerApp) installCustomerApp.hidden = true;
+  showToast('Citi Online has been installed.');
+});
+if (installCustomerApp) installCustomerApp.addEventListener('click', async () => {
+  if (!deferredInstallPrompt) {
+    showToast('Open Chrome menu (⋮) and choose Install app or Add to Home screen.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  installCustomerApp.hidden = true;
+});
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {})); }
 showCustomer();
 </script></body></html>
