@@ -11,6 +11,6 @@
   "background_color": "#07588e",
   "theme_color": "#07588e",
   "icons": [
-    {"src": "/citi-icon-512.png?v=4", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+    {"src": "/citi-icon.svg?v=5", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
   ]
 }
