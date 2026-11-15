@@ -84,7 +84,6 @@ let supabaseUser=null, cloudSaveQueue=Promise.resolve();
 const KEY='citi_personal_banking_data_v1', AUTH='citi_personal_banking_admin_v1';
 const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n)||0);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const today=()=>new Date().toISOString().slice(0,10);
 const uid=()=>crypto.randomUUID();
 const defaultData=()=>({owner:'Account holder',accounts:[],transactions:[]});
 let data;try{data=JSON.parse(localStorage.getItem(KEY))||defaultData()}catch{data=defaultData()}
