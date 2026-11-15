@@ -290,6 +290,7 @@ async function transferForm(){
  if(!supabaseUser){showToast('Please sign in again.');return}
  if(!data.accounts[0]?.id){showToast('No source account is available.');return}
  openModal('Transfer Funds','<div class="empty">Loading transfer form…</div>');
+ document.getElementById('modal').classList.add('transfer-modal');
  try{
   let stage='form',transfer=null,requestResult=null;
   const body=document.getElementById('modalBody');
