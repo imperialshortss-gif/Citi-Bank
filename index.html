@@ -250,31 +250,67 @@ document.getElementById('createCustomerBtn').onclick=()=>{
 
 async function transferForm(){
  if(!supabaseUser){showToast('Please sign in again.');return}
- openModal('Transfer funds','<div class="empty">Loading recipient accounts…</div>');
+ openModal('Transfer Funds','<div class="empty">Loading recipient accounts…</div>');
  try{
   const {data:recipients,error}=await citiDb.rpc('list_transfer_recipients');
   if(error)throw error;
   const available=(recipients||[]).filter(r=>r.account_id);
   if(!available.length){document.getElementById('modalBody').innerHTML='<div class="empty">No other customer accounts are currently available.</div>';return}
   const recipientOptions=available.map(r=>'<option value="'+esc(r.account_id)+'">'+esc(r.owner_name)+' — '+esc(r.account_name)+' ···· '+esc(r.account_number_last4)+'</option>').join('');
-  document.getElementById('modalBody').innerHTML='<div class="eyebrow" style="color:var(--blue);margin-bottom:12px">INTERNAL ACCOUNT LEDGER</div><form id="transferForm"><div class="field"><label>From account</label><select id="fromAccount" required>'+accountOptions()+'</select></div><div class="field"><label>To account</label><select id="toAccount" required>'+recipientOptions+'</select></div><div class="field"><label>Transfer date</label><input id="transferDate" type="date" value="'+today()+'" required></div><div class="field"><label>Amount (USD)</label><input id="transferAmount" type="number" min=".01" step=".01" required></div><div class="field"><label>Description</label><input id="transferDesc" value="Account transfer" required></div><button class="btn" id="submitTransfer">Continue transfer</button></form>';
-  document.getElementById('transferForm').onsubmit=async e=>{
-   e.preventDefault();
-   const button=document.getElementById('submitTransfer');
-   const from=document.getElementById('fromAccount').value,to=document.getElementById('toAccount').value;
-   const amount=Number(document.getElementById('transferAmount').value),desc=document.getElementById('transferDesc').value.trim(),date=document.getElementById('transferDate').value;
-   if(!from||!to||from===to){showToast('Choose a valid destination account.');return}
-   if(!(amount>0)||!Number.isFinite(amount)){showToast('Enter a valid amount.');return}
-   if(!date){showToast('Choose a transfer date.');return}
+  let stage=1, transfer=null, completed=null;
+  const body=document.getElementById('modalBody');
+  const steps=()=>'<div style="display:flex;align-items:center;gap:7px;margin:2px 0 20px"><div style="display:flex;align-items:center;gap:6px;color:'+(stage>=1?'var(--blue)':'var(--muted)')+';font-size:12px;font-weight:700"><span style="width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:'+(stage>=1?'var(--blue)':'#eaf2f7')+';color:'+(stage>=1?'white':'var(--muted)')+'">1</span><span>Details</span></div><div style="height:2px;flex:1;background:'+(stage>=2?'var(--blue)':'var(--line)')+'"></div><div style="display:flex;align-items:center;gap:6px;color:'+(stage>=2?'var(--blue)':'var(--muted)')+';font-size:12px;font-weight:700"><span style="width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:'+(stage>=2?'var(--blue)':'#eaf2f7')+';color:'+(stage>=2?'white':'var(--muted)')+'">2</span><span>Review</span></div><div style="height:2px;flex:1;background:'+(stage>=3?'var(--blue)':'var(--line)')+'"></div><div style="display:flex;align-items:center;gap:6px;color:'+(stage>=3?'var(--blue)':'var(--muted)')+';font-size:12px;font-weight:700"><span style="width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:'+(stage>=3?'var(--blue)':'#eaf2f7')+';color:'+(stage>=3?'white':'var(--muted)')+'">3</span><span>Done</span></div></div>';
+  const sourceAccount=id=>data.accounts.find(a=>a.id===id);
+  const recipient=id=>available.find(a=>a.account_id===id);
+  const row=(label,value)=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="color:var(--muted)">'+label+'</span><strong style="text-align:right;overflow-wrap:anywhere">'+value+'</strong></div>';
+  function renderDetails(){
+   stage=1;
+   body.innerHTML=steps()+'<div class="notice">Transfer funds to another customer account within this Citi platform.</div><form id="transferForm"><div class="field"><label>From account</label><select id="fromAccount" required>'+accountOptions()+'</select></div><div class="field"><label>Beneficiary / To account</label><select id="toAccount" required>'+recipientOptions+'</select></div><div class="field"><label>Transfer date</label><input id="transferDate" type="date" value="'+today()+'" required></div><div class="field"><label>Transfer amount (USD)</label><input id="transferAmount" type="number" min=".01" step=".01" placeholder="0.00" required></div><div class="field"><label>Reference / Description</label><input id="transferDesc" value="Account transfer" maxlength="120" required></div><div id="transferAvailable" class="notice" style="margin-top:4px">Available balance: '+money(data.accounts[0]?.balance||0)+'</div><div class="form-actions"><button class="btn" type="submit" style="width:100%">Continue to Review →</button></div></form>';
+   const from=document.getElementById('fromAccount'),amount=document.getElementById('transferAmount'),availableLabel=document.getElementById('transferAvailable');
+   function updateAvailable(){const a=sourceAccount(from.value);availableLabel.textContent='Available balance: '+money(a?.balance||0)}
+   from.onchange=updateAvailable;
+   document.getElementById('transferForm').onsubmit=e=>{
+    e.preventDefault();
+    const fromId=from.value,toId=document.getElementById('toAccount').value,amt=Number(amount.value),date=document.getElementById('transferDate').value,description=document.getElementById('transferDesc').value.trim();
+    const source=sourceAccount(fromId),target=recipient(toId);
+    if(!source||!target||fromId===toId){showToast('Choose valid source and beneficiary accounts.');return}
+    if(!Number.isFinite(amt)||amt<=0){showToast('Enter a valid transfer amount.');return}
+    if(amt>Number(source.balance||0)){showToast('The transfer amount exceeds your available balance.');return}
+    if(!date||!description){showToast('Complete the transfer date and description.');return}
+    transfer={fromId,toId,amount:amt,date,description,sourceName:source.name,sourceNumber:source.number,targetName:target.owner_name,targetAccount:target.account_name,targetLast4:target.account_number_last4};
+    renderReview();
+   };
+  }
+  function renderReview(){
+   stage=2;
+   body.innerHTML=steps()+'<div style="border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-bottom:15px"><div style="background:#edf5fa;padding:14px 16px;color:var(--deep);font-weight:700">Review Transfer Details</div><div style="padding:8px 16px">'+row('From account',esc(transfer.sourceName)+' ···· '+esc(transfer.sourceNumber))+row('Beneficiary',esc(transfer.targetName))+row('Receiving account',esc(transfer.targetAccount)+' ···· '+esc(transfer.targetLast4))+row('Transfer date',esc(transfer.date))+row('Description',esc(transfer.description))+'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 0 8px"><strong style="font-size:14px">Total to Debit</strong><strong style="font-size:25px;color:var(--deep)">'+money(transfer.amount)+'</strong></div></div></div><label style="display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--line);border-radius:9px;font-size:12px;line-height:1.5;margin-bottom:16px"><input id="transferConfirm" type="checkbox" style="margin-top:3px;width:17px;height:17px;flex:0 0 auto">I confirm that the beneficiary and transfer details are correct and authorize this internal account transfer.</label><div class="form-actions"><button class="btn secondary" type="button" id="editTransfer" style="flex:1">Edit Details</button><button class="btn" type="button" id="confirmTransfer" style="flex:1" disabled>Confirm Transfer</button></div>';
+   const check=document.getElementById('transferConfirm'),confirm=document.getElementById('confirmTransfer');
+   check.onchange=()=>confirm.disabled=!check.checked;
+   document.getElementById('editTransfer').onclick=renderDetails;
+   confirm.onclick=executeTransfer;
+  }
+  async function executeTransfer(){
+   const button=document.getElementById('confirmTransfer');
    button.disabled=true;button.textContent='Processing…';
    try{
-    const {data:result,error}=await citiDb.rpc('record_internal_transfer',{p_from_account:from,p_to_account:to,p_amount:amount,p_description:desc,p_transfer_date:date});
+    const {data:result,error}=await citiDb.rpc('record_internal_transfer',{p_from_account:transfer.fromId,p_to_account:transfer.toId,p_amount:transfer.amount,p_description:transfer.description,p_transfer_date:transfer.date});
     if(error)throw error;
     if(result?.error)throw new Error(result.error);
     await loadCloudData(supabaseUser);
-    closeModal();showToast('Internal transfer recorded successfully.');
-   }catch(err){showToast(err?.message||'Unable to record this transfer.');button.disabled=false;button.textContent='Continue transfer'}
-  };
+    completed={...transfer,completedAt:new Date().toLocaleString()};
+    renderSuccess();
+   }catch(err){showToast(err?.message||'Unable to complete this internal transfer.');button.disabled=false;button.textContent='Confirm Transfer'}
+  }
+  function renderSuccess(){
+   stage=3;
+   body.innerHTML=steps()+'<div style="text-align:center;padding:12px 5px 18px"><div style="width:66px;height:66px;border-radius:50%;background:#e8f7ef;color:#168454;display:grid;place-items:center;font-size:35px;margin:0 auto 13px">✓</div><h3 style="font-size:22px;color:#176b48;margin:0 0 5px">Transfer Completed</h3><p style="font-size:13px;color:var(--muted);margin:0">Your internal account transfer has been recorded.</p></div><div style="border:1px solid var(--line);border-radius:10px;padding:8px 15px;margin-bottom:16px">'+row('Status','<span style="color:#168454">Completed</span>')+row('From account',esc(completed.sourceName)+' ···· '+esc(completed.sourceNumber))+row('Beneficiary',esc(completed.targetName))+row('Receiving account',esc(completed.targetAccount)+' ···· '+esc(completed.targetLast4))+row('Date',esc(completed.date))+row('Amount',money(completed.amount))+'</div><div class="form-actions"><button class="btn secondary" id="downloadTransferReceipt" type="button" style="flex:1">Download Receipt</button><button class="btn" id="finishTransfer" type="button" style="flex:1">Done</button></div>';
+   document.getElementById('downloadTransferReceipt').onclick=()=>{
+    const lines=['Citi Personal Banking — Internal Transfer Receipt','Status: Completed','Date: '+completed.date,'From: '+completed.sourceName+' ···· '+completed.sourceNumber,'Beneficiary: '+completed.targetName,'Receiving account: '+completed.targetAccount+' ···· '+completed.targetLast4,'Description: '+completed.description,'Amount: '+money(completed.amount),'Recorded at: '+completed.completedAt,'This receipt confirms an internal account-ledger transfer within this platform.'];
+    const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='citi-internal-transfer-receipt.txt';a.click();URL.revokeObjectURL(url);
+   };
+   document.getElementById('finishTransfer').onclick=()=>{closeModal();showToast('Internal transfer recorded successfully.');};
+  }
+  renderDetails();
  }catch(err){
   document.getElementById('modalBody').innerHTML='<div class="empty">Unable to load recipient accounts: '+esc(err?.message||'Please try again.')+'</div>';
  }
