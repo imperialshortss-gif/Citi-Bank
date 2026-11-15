@@ -95,3 +95,39 @@ $$;
 
 revoke all on function public.record_internal_transfer(uuid, uuid, numeric, text, date) from public;
 grant execute on function public.record_internal_transfer(uuid, uuid, numeric, text, date) to authenticated;
+
+-- Admin-only ledger balance adjustment, recorded atomically with the account balance.
+create or replace function public.admin_manage_account_balance(
+  p_account_id uuid, p_type text, p_amount numeric, p_transaction_date date, p_description text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_account public.accounts%rowtype;
+  v_new_balance numeric;
+  v_description text;
+begin
+  if auth.uid() is null then raise exception 'Authentication required'; end if;
+  if not exists (select 1 from auth.users where id = auth.uid() and email = 'admin@citi-login.example.com') then
+    raise exception 'Administrator access required';
+  end if;
+  if p_type not in ('debit', 'credit') then raise exception 'Transaction type must be debit or credit'; end if;
+  if p_amount is null or p_amount <= 0 or p_amount > 1000000000 then raise exception 'Enter a valid transaction amount'; end if;
+  if p_transaction_date is null then raise exception 'Choose a transaction date'; end if;
+  v_description := nullif(trim(coalesce(p_description, '')), '');
+  if v_description is null then raise exception 'Transaction description is required'; end if;
+  select * into v_account from public.accounts where id = p_account_id for update;
+  if v_account.id is null then raise exception 'Customer account not found'; end if;
+  v_new_balance := case when p_type = 'credit' then coalesce(v_account.balance, 0) + p_amount else coalesce(v_account.balance, 0) - p_amount end;
+  if v_new_balance < 0 then raise exception 'Insufficient available balance for this debit'; end if;
+  update public.accounts set balance = round(v_new_balance, 2) where id = v_account.id;
+  insert into public.transactions (id, owner_id, account_id, transaction_date, description, transaction_type, amount, direction, transaction_details)
+  values (gen_random_uuid(), v_account.owner_id, v_account.id, p_transaction_date, v_description, 'Adjustment', p_amount, p_type, 'Admin ledger adjustment');
+  return jsonb_build_object('success', true, 'new_balance', round(v_new_balance, 2));
+end;
+$$;
+revoke all on function public.admin_manage_account_balance(uuid, text, numeric, date, text) from public;
+grant execute on function public.admin_manage_account_balance(uuid, text, numeric, date, text) to authenticated;
