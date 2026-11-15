@@ -129,6 +129,7 @@ function addTx({description,type,accountId,amount,kind,date=today(),note=''}){co
 function showToast(message){const t=document.getElementById('toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show')}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function accountOptions(selected=''){return data.accounts.map(a=>'<option value="'+esc(a.id)+'" '+(a.id===selected?'selected':'')+'>'+esc(a.name)+' ···· '+esc(a.number)+'</option>').join('')}
 function renderHome(){
  const now=new Date(),month=now.getMonth(),year=now.getFullYear();
@@ -204,8 +205,27 @@ async function loadCustomers(){
 function renderCustomers(){
  const q=(document.getElementById('customerSearch')?.value||'').toLowerCase();
  const rows=customerCache.filter(c=>[c.fullName,c.username,c.email,c.phone,...c.accounts.map(a=>a.number)].join(' ').toLowerCase().includes(q));
- document.getElementById('customerTable').innerHTML=rows.length?'<table><thead><tr><th>Customer</th><th>Username</th><th>Account</th><th>Type</th><th>Balance</th><th>Created</th><th></th></tr></thead><tbody>'+rows.map(c=>c.accounts.map(a=>'<tr><td><strong>'+esc(c.fullName)+'</strong><br><small>'+esc(c.email||c.phone||'')+'</small></td><td>'+esc(c.username)+'</td><td>'+esc(a.name)+' ···· '+esc(a.number)+'</td><td>'+esc(a.type)+'</td><td>'+money(a.balance)+'</td><td>'+new Date(c.createdAt).toLocaleDateString()+'</td><td><button class="btn secondary small" data-edit-customer="'+esc(c.id)+'" data-edit-account="'+esc(a.id)+'">Edit</button></td></tr>').join('')).join('')+'</tbody></table>':'<div class="empty">No customer accounts found.</div>';
+ document.getElementById('customerTable').innerHTML=rows.length?'<table><thead><tr><th>Customer</th><th>Username</th><th>Account</th><th>Type</th><th>Balance</th><th>Created</th><th></th></tr></thead><tbody>'+rows.map(c=>c.accounts.map(a=>'<tr><td><strong>'+esc(c.fullName)+'</strong><br><small>'+esc(c.email||c.phone||'')+'</small></td><td>'+esc(c.username)+'</td><td>'+esc(a.name)+' ···· '+esc(a.number)+'</td><td>'+esc(a.type)+'</td><td>'+money(a.balance)+'</td><td>'+new Date(c.createdAt).toLocaleDateString()+'</td><td><button class="btn secondary small" data-edit-customer="'+esc(c.id)+'" data-edit-account="'+esc(a.id)+'">Edit</button> <button class="btn small" data-manage-customer="'+esc(c.id)+'" data-manage-account="'+esc(a.id)+'">Manage Balance</button></td></tr>').join('')).join('')+'</tbody></table>':'<div class="empty">No customer accounts found.</div>';
  document.querySelectorAll('[data-edit-customer]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.editCustomer,b.dataset.editAccount));
+ document.querySelectorAll('[data-manage-customer]').forEach(b=>b.onclick=()=>manageLedgerBalance(b.dataset.manageCustomer,b.dataset.manageAccount));
+}
+
+function manageLedgerBalance(userId,accountId){
+ const customer=customerCache.find(x=>x.id===userId),account=customer?.accounts.find(x=>x.id===accountId);if(!customer||!account)return;
+ openModal('Manage Ledger Balance','<p class="notice">Record an internal account-ledger adjustment for this customer account.</p><div class="field"><label>Transaction Type</label><select id="ledgerType"><option value="debit">Debit (-)</option><option value="credit">Credit (+)</option></select></div><div class="field"><label>Amount (USD)</label><input id="ledgerAmount" type="number" min=".01" step=".01" placeholder="0.00" required></div><div class="field"><label>Transaction Date</label><input id="ledgerDate" type="date" value="'+today()+'" required></div><div class="field"><label>Description</label><input id="ledgerDescription" type="text" placeholder="e.g. Account adjustment" value="Account adjustment" required></div><div class="form-actions"><button class="btn secondary" type="button" id="cancelLedger">Cancel</button><button class="btn" type="button" id="executeLedger">Execute Ledger Update</button></div>');
+ document.getElementById('cancelLedger').onclick=closeModal;
+ document.getElementById('executeLedger').onclick=async()=>{
+  const button=document.getElementById('executeLedger'),type=document.getElementById('ledgerType').value,amount=Number(document.getElementById('ledgerAmount').value),date=document.getElementById('ledgerDate').value,description=document.getElementById('ledgerDescription').value.trim();
+  if(!(amount>0)||!Number.isFinite(amount)){showToast('Enter an amount greater than zero.');return}
+  if(!date||!description){showToast('Enter a transaction date and description.');return}
+  button.disabled=true;button.textContent='Executing…';
+  try{
+   const {data:result,error}=await citiDb.rpc('admin_manage_account_balance',{p_account_id:accountId,p_type:type,p_amount:amount,p_transaction_date:date,p_description:description});
+   if(error)throw error;if(result?.error)throw new Error(result.error);
+   closeModal();showToast(type==='credit'?'Credit posted.':'Debit posted.');await loadCustomers();
+   if(supabaseUser)await loadCloudData(supabaseUser);
+  }catch(err){showToast(err?.message||'Unable to update the ledger balance.');button.disabled=false;button.textContent='Execute Ledger Update'}
+ };
 }
 function editCustomer(userId,accountId){
  const c=customerCache.find(x=>x.id===userId),a=c?.accounts.find(x=>x.id===accountId);if(!c||!a)return;
