@@ -18,6 +18,7 @@ as $$
   where auth.uid() is not null
     and a.owner_id <> auth.uid()
     and u.email like '%@citi-login.example.com'
+    and u.email <> 'admin@citi-login.example.com'
   order by owner_name, a.name;
 $$;
 
