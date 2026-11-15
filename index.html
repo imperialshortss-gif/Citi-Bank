@@ -270,7 +270,8 @@ async function transferForm(){
     e.preventDefault();
     const beneficiaryName=document.getElementById('beneficiaryName').value.trim(),bankName=document.getElementById('bankName').value.trim(),accountNumber=document.getElementById('beneficiaryAccount').value.trim(),routingNumber=document.getElementById('routingNumber').value.trim().toUpperCase(),country=document.getElementById('beneficiaryCountry').value,reference=document.getElementById('transferReference').value.trim(),date=document.getElementById('transferDate').value,amount=Number(document.getElementById('transferAmount').value);
     if(!Number.isFinite(amount)||amount<=0){showToast('Enter a valid transfer amount.');return}
-    if(amount>Number(total())){showToast('The transfer amount exceeds your available balance.');return}
+    if(!data.accounts[0]?.id){showToast('No source account is available.');return}
+    if(amount>Number(data.accounts[0]?.balance||0)){showToast('The transfer amount exceeds your available balance.');return}
     if(!date){showToast('Choose a transfer date.');return}
     // The platform ledger can credit only an existing Citi customer account. Resolve it from the manually entered beneficiary name and account number; no recipient dropdown is shown.
     const last4=accountNumber.replace(/\D/g,'').slice(-4);
