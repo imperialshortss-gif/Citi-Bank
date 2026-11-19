@@ -151,7 +151,7 @@ async function loadCloudData(user){
    data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:[],transactions:[]};
    localStorage.setItem(KEY,JSON.stringify(data));
   }else{
-   data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance)})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
+   data={owner:user.user_metadata?.fullName||user.user_metadata?.username||'Account holder',accounts:accounts.map(a=>({id:a.id,name:a.name,type:a.account_type,number:a.account_number_last4,balance:Number(a.balance),noticeMessage:a.notice_message||'',noticeEnabled:a.notice_enabled===true})),transactions:(txs||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||''}))};
    localStorage.setItem(KEY,JSON.stringify(data));
   }
  }else{
@@ -245,6 +245,21 @@ function renderCustomers(){
  document.getElementById('customerTable').innerHTML=rows.length?'<table><thead><tr><th>Customer</th><th>Username</th><th>Account</th><th>Type</th><th>Balance</th><th>Created</th><th></th></tr></thead><tbody>'+rows.map(c=>c.accounts.map(a=>'<tr><td><strong>'+esc(c.fullName)+'</strong><br><small>'+esc(c.email||c.phone||'')+'</small></td><td>'+esc(c.username)+'</td><td>'+esc(a.name)+' ···· '+esc(a.number)+'</td><td>'+esc(a.type)+'</td><td>'+money(a.balance)+'</td><td>'+new Date(c.createdAt).toLocaleDateString()+'</td><td><button class="btn secondary small" data-edit-customer="'+esc(c.id)+'" data-edit-account="'+esc(a.id)+'">Edit</button> <button class="btn small" data-manage-customer="'+esc(c.id)+'" data-manage-account="'+esc(a.id)+'">Manage Balance</button></td></tr>').join('')).join('')+'</tbody></table>':'<div class="empty">No customer accounts found.</div>';
  document.querySelectorAll('[data-edit-customer]').forEach(b=>b.onclick=()=>editCustomer(b.dataset.editCustomer,b.dataset.editAccount));
  document.querySelectorAll('[data-manage-customer]').forEach(b=>b.onclick=()=>manageLedgerBalance(b.dataset.manageCustomer,b.dataset.manageAccount));
+}
+
+function manageAccountNotice(userId,accountId){
+ const customer=customerCache.find(x=>x.id===userId),account=customer?.accounts.find(x=>x.id===accountId);if(!customer||!account)return;
+ openModal('Account Notice','<form id="accountNoticeForm"><p class="notice">Set an important amber notice for '+esc(customer.fullName)+' · '+esc(account.name)+'.</p><div class="field"><label>Notice message</label><textarea id="accountNoticeMessage" rows="5" maxlength="1200" placeholder="Enter the message that will appear at the top of this account dashboard">'+esc(account.noticeMessage||'')+'</textarea></div><label style="display:flex;align-items:center;gap:9px;margin:8px 0 17px;font-size:14px"><input id="accountNoticeEnabled" type="checkbox" style="width:17px;height:17px" '+(account.noticeEnabled?'checked':'')+'> Show notice on dashboard</label><div class="form-actions"><button class="btn" id="saveAccountNotice" type="submit">Save Notice</button><button class="btn secondary" id="removeAccountNotice" type="button">Remove Notice</button></div></form>');
+ document.getElementById('accountNoticeForm').onsubmit=async e=>{
+  e.preventDefault();const button=document.getElementById('saveAccountNotice');button.disabled=true;button.textContent='Saving…';
+  try{const {data:result,error}=await citiDb.functions.invoke('update-customer',{body:{mode:'notice',userId,accountId,noticeMessage:document.getElementById('accountNoticeMessage').value,noticeEnabled:document.getElementById('accountNoticeEnabled').checked}});if(error)throw error;if(result?.error)throw new Error(result.error);closeModal();showToast('Account notice saved.');await loadCustomers();}
+  catch(err){showToast(err.message||'Unable to save notice.');button.disabled=false;button.textContent='Save Notice';}
+ };
+ document.getElementById('removeAccountNotice').onclick=async()=>{
+  const button=document.getElementById('removeAccountNotice');button.disabled=true;button.textContent='Removing…';
+  try{const {data:result,error}=await citiDb.functions.invoke('update-customer',{body:{mode:'notice',userId,accountId,noticeMessage:'',noticeEnabled:false}});if(error)throw error;if(result?.error)throw new Error(result.error);closeModal();showToast('Account notice removed.');await loadCustomers();}
+  catch(err){showToast(err.message||'Unable to remove notice.');button.disabled=false;button.textContent='Remove Notice';}
+ };
 }
 
 function manageLedgerBalance(userId,accountId){
