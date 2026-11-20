@@ -418,7 +418,7 @@ async function transferForm(){
      const state=Array.isArray(restriction)?restriction[0]:restriction;
      if(state?.blocked===true){
       stage='restricted';
-      body.innerHTML='<section style="background:#fff;border:1px solid #dce6ec;border-radius:13px;padding:24px;box-shadow:0 4px 14px #0b254012"><div style="display:flex;align-items:center;gap:11px;margin-bottom:13px"><span style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#b7791f;font-size:21px;font-weight:800">i</span><h3 style="margin:0;color:#064b82;font-size:19px">Transfer Service Information</h3></div><p style="margin:0;color:#344b5c;font-size:14px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere">'+escv(state.message||'')+'</p><div style="display:grid;gap:10px;margin-top:22px"><button class="btn secondary" id="backFromTransferRestriction" type="button">Back to Transfer Details</button><button class="btn" id="closeTransferRestriction" type="button">Return to Dashboard</button></div></section>';
+      body.innerHTML='<section class="transfer-success-card"><header class="transfer-success-head"><div class="restriction-mark" style="margin:0 auto 14px">i</div><h2>Transfer Service Information</h2><p style="white-space:pre-wrap;overflow-wrap:anywhere">'+escv(state.message||'')+'</p></header><div class="transfer-success-content"><div class="transfer-success-actions"><button class="btn" id="closeTransferRestriction" type="button">Return to Dashboard</button></div></div></section>';
       document.getElementById('backFromTransferRestriction').onclick=renderReview;
       document.getElementById('closeTransferRestriction').onclick=()=>{closeModal();showToast('Transfer was not submitted.')};
       return;
