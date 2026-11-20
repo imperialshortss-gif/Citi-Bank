@@ -25,6 +25,6 @@ Deno.serve(async(req)=>{
   const digits=accountNumber || (String(Date.now())+String(Math.floor(Math.random()*10000))).slice(-12);
   const {data:account,error:accountError}=await db.from("accounts").insert({owner_id:created.user.id,name:accountName,account_type:accountType,account_number_last4:digits.slice(-4),balance}).select("*").single();
   if(accountError){await db.auth.admin.deleteUser(created.user.id);return reply({error:"Customer login was not saved: "+accountError.message},400);}
-  return reply({success:true,customer:{id:created.user.id,fullName,username,email:String(b.email||""),phone:String(b.phone||""),address:String(b.address||""),accountName:account.name,accountType:account.account_type,accountNumberLast4:account.account_number_last4,balance:Number(account.balance),status:"Active"}},201);
+  return reply({success:true,customer:{id:created.user.id,fullName,username,email:String(b.email||""),phone:String(b.phone||""),address:String(b.address||""),accountName:account.name,accountType:account.account_type,accountNumberLast4:account.account_number_last4,accountNumberFull:account.account_number_full,balance:Number(account.balance),status:"Active"}},201);
  } catch(e){return reply({error:e instanceof Error?e.message:"Unexpected error"},500);}
 });
