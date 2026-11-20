@@ -319,7 +319,7 @@ async function transferForm(){
   const escv=v=>esc(String(v??''));
   const row=(label,value)=>'<div style="display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px"><span style="color:var(--muted)">'+label+'</span><strong style="text-align:right;overflow-wrap:anywhere">'+value+'</strong></div>';
   const stepper=(current)=>'<div style="display:flex;align-items:center;gap:8px;margin:4px 0 22px"><div style="display:flex;align-items:center;gap:7px;color:var(--blue);font-size:12px;font-weight:700"><span style="width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:white">1</span><span>Details</span></div><div style="height:2px;flex:1;background:'+(current==='review'?'var(--blue)':'var(--line)')+'"></div><div style="display:flex;align-items:center;gap:7px;color:'+(current==='review'?'var(--blue)':'var(--muted)')+';font-size:12px;font-weight:700"><span style="width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:'+(current==='review'?'var(--blue)':'#edf2f5')+';color:'+(current==='review'?'white':'var(--muted)')+'">2</span><span>Review</span></div><div style="height:2px;flex:1;background:var(--line)"></div><div style="display:flex;align-items:center;gap:7px;color:var(--muted);font-size:12px;font-weight:700"><span style="width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:#edf2f5;color:var(--muted)">✓</span></div></div>';
-  function renderForm(){
+  function renderExternalForm(){
    document.getElementById('transferReviewActions')?.remove();
    stage='form';
    const countries=[['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],['PK','Pakistan'],['AE','United Arab Emirates'],['SA','Saudi Arabia'],['IN','India'],['CN','China'],['HK','Hong Kong'],['SG','Singapore'],['MY','Malaysia'],['TH','Thailand'],['JP','Japan'],['KR','South Korea'],['BD','Bangladesh'],['LK','Sri Lanka'],['NP','Nepal'],['QA','Qatar'],['KW','Kuwait'],['BH','Bahrain'],['OM','Oman'],['TR','Turkey'],['DE','Germany'],['FR','France'],['IT','Italy'],['ES','Spain'],['NL','Netherlands'],['CH','Switzerland'],['IE','Ireland'],['NZ','New Zealand'],['ZA','South Africa'],['NG','Nigeria'],['KE','Kenya'],['EG','Egypt'],['BR','Brazil'],['MX','Mexico'],['OTHER','Other']];
@@ -334,33 +334,99 @@ async function transferForm(){
     renderReview();
    };
   }
+  function renderStart(){
+   stage='start';transfer=null;
+   body.innerHTML='<div style="margin:2px 0 18px"><h3 style="font-size:19px;margin:0 0 5px;color:var(--deep)">Choose transfer type</h3><p style="font-size:13px;color:var(--muted);margin:0">Select how you would like to send money.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px"><button type="button" id="chooseInternalTransfer" style="text-align:left;background:#fff;border:1px solid #cbdde8;border-radius:13px;padding:22px;color:var(--deep);box-shadow:0 3px 12px #1231"><span style="display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e8f3fb;color:#0878b9;font-size:25px;margin-bottom:14px">⇄</span><strong style="display:block;font-size:16px">Internal Transfer</strong><span style="display:block;color:var(--muted);font-size:12px;margin-top:5px">Transfer to another customer account using the full account number.</span></button><button type="button" id="chooseExternalTransfer" style="text-align:left;background:#fff;border:1px solid #cbdde8;border-radius:13px;padding:22px;color:var(--deep);box-shadow:0 3px 12px #1231"><span style="display:grid;place-items:center;width:48px;height:48px;border-radius:12px;background:#e8f3fb;color:#0878b9;font-size:25px;margin-bottom:14px">↗</span><strong style="display:block;font-size:16px">External Transfer</strong><span style="display:block;color:var(--muted);font-size:12px;margin-top:5px">Send a transfer to a beneficiary at another bank.</span></button></div>';
+   document.getElementById('chooseInternalTransfer').onclick=renderInternalForm;
+   document.getElementById('chooseExternalTransfer').onclick=renderExternalForm;
+  }
+  function renderInternalForm(){
+   stage='form';transfer=null;
+   body.innerHTML='<div style="border:1px solid var(--line);border-radius:12px;overflow:hidden"><div style="padding:17px 18px;background:#f5f9fc;border-bottom:1px solid var(--line)"><h3 style="font-size:17px;margin:0;color:var(--deep)">⇄ &nbsp;Internal Transfer</h3><p style="font-size:12px;color:var(--muted);margin:5px 0 0">Enter the recipient account number to identify the beneficiary.</p></div><form id="internalTransferForm" style="padding:18px"><div class="field"><label>Beneficiary Account Number</label><div style="display:flex;gap:8px;align-items:stretch"><input id="internalBeneficiaryAccount" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="Enter 12-digit account number" required style="flex:1;min-width:0"><button class="btn secondary" id="findInternalRecipient" type="button" style="white-space:nowrap">Find</button></div><small style="color:var(--muted)">Enter the full 12-digit account number.</small></div><div id="internalBeneficiaryResult" class="notice hidden" aria-live="polite"></div><div class="field"><label>Beneficiary Name</label><input id="internalBeneficiaryName" readonly placeholder="Name will appear after account lookup"></div><div class="field"><label>Transfer Amount (USD)</label><input id="internalTransferAmount" type="number" min=".01" step=".01" placeholder="0.00" required></div><div class="field"><label>Transfer Date</label><input id="internalTransferDate" type="date" value="'+today()+'" required></div><div class="field"><label>Reference / Memo (Optional)</label><input id="internalTransferReference" placeholder="Add a note"></div><div class="notice">Available balance: <strong>'+moneyFmt(data.accounts[0]?.balance||0)+'</strong></div><div class="form-actions"><button class="btn secondary" type="button" id="backToTransferChoices">Back</button><button class="btn" type="submit" style="flex:1">Continue to Review →</button></div></form></div>';
+   let matchedRecipient=null,matchedAccountNumber='';
+   const accountInput=document.getElementById('internalBeneficiaryAccount'),nameInput=document.getElementById('internalBeneficiaryName'),resultBox=document.getElementById('internalBeneficiaryResult'),findButton=document.getElementById('findInternalRecipient');
+   accountInput.addEventListener('input',()=>{matchedRecipient=null;matchedAccountNumber='';nameInput.value='';resultBox.classList.add('hidden');resultBox.style.background='';resultBox.style.color='';});
+   findButton.onclick=async()=>{
+    const accountNumber=accountInput.value.trim();
+    if(!/^\d{12}$/.test(accountNumber)){showToast('Enter a valid 12-digit account number.');return}
+    findButton.disabled=true;findButton.textContent='Checking…';
+    try{
+     const {data:matches,error}=await citiDb.rpc('lookup_transfer_recipient',{p_account_number_full:accountNumber});
+     if(error)throw error;
+     const recipient=Array.isArray(matches)?matches[0]:matches;
+     if(!recipient?.account_id)throw new Error('No matching beneficiary account was found.');
+     matchedRecipient=recipient;matchedAccountNumber=accountNumber;nameInput.value=recipient.beneficiary_name;
+     resultBox.textContent='Beneficiary found: '+recipient.beneficiary_name+' · '+recipient.account_name;
+     resultBox.classList.remove('hidden');
+    }catch(err){matchedRecipient=null;matchedAccountNumber='';nameInput.value='';resultBox.textContent=err?.message||'Unable to find this account.';resultBox.classList.remove('hidden');resultBox.style.background='#fff0f0';resultBox.style.color='#9b2733';}
+    finally{findButton.disabled=false;findButton.textContent='Find';}
+   };
+   document.getElementById('backToTransferChoices').onclick=renderStart;
+   document.getElementById('internalTransferForm').onsubmit=e=>{
+    e.preventDefault();
+    if(!matchedRecipient||matchedAccountNumber!==accountInput.value.trim()){showToast('Find and verify the beneficiary account first.');return}
+    const amount=Number(document.getElementById('internalTransferAmount').value),date=document.getElementById('internalTransferDate').value;
+    if(!Number.isFinite(amount)||amount<=0){showToast('Enter a valid transfer amount.');return}
+    if(amount>Number(data.accounts[0]?.balance||0)){showToast('The transfer amount exceeds your available balance.');return}
+    if(!date){showToast('Choose a transfer date.');return}
+    transfer={mode:'internal',beneficiaryName:matchedRecipient.beneficiary_name,beneficiaryAccountId:matchedRecipient.account_id,accountName:matchedRecipient.account_name,accountNumber:accountInput.value.trim(),amount,date,reference:document.getElementById('internalTransferReference').value.trim(),requestId:crypto.randomUUID()};
+    renderInternalReview();
+   };
+  }
+  function renderInternalReview(){
+   stage='review';
+   body.innerHTML=stepper('review')+'<section class="transfer-card"><header class="transfer-card-head"><h3>Review Internal Transfer</h3><p>Check the beneficiary and amount before confirming.</p></header><div class="transfer-review-columns"><section class="transfer-review-panel"><h4 class="transfer-panel-title">From Account</h4><p class="transfer-detail"><strong>'+escv(data.owner||'Customer')+'</strong><span>Account Holder</span></p><p class="transfer-detail"><strong>'+escv(data.accounts[0]?.name||'Primary Account')+'</strong><span>Account Name</span></p><p class="transfer-detail"><strong>•••• '+escv(data.accounts[0]?.number||'')+'</strong><span>Account Number</span></p></section><section class="transfer-review-panel"><h4 class="transfer-panel-title">To Beneficiary</h4><p class="transfer-detail"><strong>'+escv(transfer.beneficiaryName)+'</strong><span>Beneficiary Name</span></p><p class="transfer-detail"><strong>'+escv(transfer.accountName)+'</strong><span>Account Name</span></p><p class="transfer-detail"><strong>•••• '+escv(transfer.accountNumber.slice(-4))+'</strong><span>Account Number</span></p></section></div><section class="transfer-amount-panel"><div class="transfer-amount-inner"><div class="transfer-amount-row"><span>Transfer Amount</span><strong>'+moneyFmt(transfer.amount)+'</strong></div><div class="transfer-total-row"><span>Total to Debit</span><strong>'+moneyFmt(transfer.amount)+'</strong></div><label class="transfer-authorization"><input id="transferConfirm" type="checkbox"><span>I confirm that the beneficiary name and account number are correct and authorize this internal transfer.</span></label><div id="transferReviewActions" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px"><button class="btn secondary" type="button" id="editTransfer">Edit Details</button><button class="btn" type="button" id="confirmTransfer" disabled>Confirm Transfer</button></div></div></section></section>';
+   const check=document.getElementById('transferConfirm'),confirm=document.getElementById('confirmTransfer');
+   check.onchange=()=>confirm.disabled=!check.checked;
+   document.getElementById('editTransfer').onclick=renderInternalForm;
+   confirm.onclick=executeTransfer;
+  }
+  function renderInternalSuccess(){
+   stage='complete';
+   body.innerHTML='<section class="transfer-success-card"><header class="transfer-success-head"><div class="success-mark">✓</div><h2>Internal Transfer Completed</h2><p>The transfer has been recorded and both account balances have been updated.</p></header><div class="transfer-success-content"><div class="transfer-success-details"><div class="transfer-success-reference"><span style="font-size:13px;color:#647887;font-weight:600">Reference Number</span><strong>'+escv(requestResult.referenceNumber)+'</strong></div><div style="display:grid;gap:15px;font-size:14px"><div class="transfer-success-row"><span>Beneficiary</span><strong>'+escv(requestResult.beneficiaryName)+'</strong></div><div class="transfer-success-row"><span>Account Number</span><strong>•••• '+escv(requestResult.accountNumber.slice(-4))+'</strong></div><div class="transfer-success-row"><span>Amount Transferred</span><strong style="font-size:18px;color:#172b3a">'+moneyFmt(requestResult.amount)+'</strong></div><div class="transfer-success-row"><span>Status</span><strong style="color:#168454">Completed</strong></div><div class="transfer-success-row"><span>Date</span><strong>'+escv(requestResult.date)+'</strong></div></div></div><div class="transfer-success-actions"><button class="btn secondary" id="downloadInternalReceipt" type="button">Download Receipt</button><button class="btn secondary" id="viewInternalHistory" type="button">View History</button><button class="btn" id="finishInternalTransfer" type="button">Return to Dashboard</button></div></div></section>';
+   document.getElementById('downloadInternalReceipt').onclick=()=>{const lines=['Internal Transfer Receipt','Reference: '+requestResult.referenceNumber,'Date: '+requestResult.date,'Beneficiary: '+requestResult.beneficiaryName,'Account ending: '+requestResult.accountNumber.slice(-4),'Amount: '+moneyFmt(requestResult.amount),'Status: Completed','Recorded at: '+requestResult.completedAt];const blob=new Blob([lines.join('\\n')],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='internal-transfer-receipt.txt';a.click();URL.revokeObjectURL(url);};
+   document.getElementById('viewInternalHistory').onclick=()=>{closeModal();openModal('Transaction history',tableTx(data.transactions,false));};
+   document.getElementById('finishInternalTransfer').onclick=()=>{closeModal();showToast('Internal transfer completed.');};
+  }
   function renderReview(){
    document.querySelector('#modal .transfer-review-actions')?.remove();
    stage='review';
    body.innerHTML=stepper('review')+'<section class="transfer-card"><header class="transfer-card-head"><h3>Review Transfer Details</h3><p>Please verify all information before confirming. Transfers cannot be reversed once processed.</p></header><div class="transfer-review-columns"><section class="transfer-review-panel"><h4 class="transfer-panel-title">From Account</h4><p class="transfer-detail"><strong>'+escv(data.owner||'Customer')+'</strong><span>Account Holder</span></p><p class="transfer-detail"><strong>'+escv(data.accounts[0]?.name||'Primary Account')+'</strong><span>Account Name</span></p><p class="transfer-detail"><strong>•••• '+escv(data.accounts[0]?.number||'')+'</strong><span>Account Number</span></p></section><section class="transfer-review-panel"><h4 class="transfer-panel-title">To Beneficiary</h4><p class="transfer-detail"><strong>'+escv(transfer.beneficiaryName)+'</strong><span>Beneficiary Name</span></p><p class="transfer-detail"><strong>'+escv(transfer.bankName)+'</strong><span>Bank Name</span></p><p class="transfer-detail"><strong>•••• '+escv(transfer.accountNumber.slice(-4))+'</strong><span>Account Number</span></p><p class="transfer-detail"><strong>'+escv(transfer.routingNumber)+'</strong><span>Routing / SWIFT</span></p><p class="transfer-detail"><strong>'+escv(transfer.country)+'</strong><span>Country</span></p></section></div><section class="transfer-amount-panel"><div class="transfer-amount-inner"><div class="transfer-amount-row"><span style="color:var(--muted)">Transfer Amount</span><strong>'+moneyFmt(transfer.amount)+'</strong></div><div class="transfer-amount-row"><span style="color:var(--muted)">Processing Fee</span><strong>'+moneyFmt(0)+'</strong></div><div class="transfer-amount-row"><span style="color:var(--muted)">Status after confirmation</span><strong>Pending</strong></div><div class="transfer-total-row"><span>Total to Debit</span><strong>'+moneyFmt(transfer.amount)+'</strong></div><label class="transfer-authorization" style="display:flex;align-items:flex-start;gap:12px;margin:20px 0 0;padding:15px;background:#fff;border:1px solid var(--line);border-radius:9px;font-size:13px;line-height:1.5;color:#526779"><input id="transferConfirm" type="checkbox" style="width:20px;height:20px;flex:0 0 20px;margin:2px 0 0;accent-color:var(--blue)"><span>I confirm that the beneficiary details above are correct. I authorize Citi to debit my account for the total amount shown.</span></label><div id="transferReviewActions" style="display:grid;grid-template-columns:1fr;gap:10px;width:100%;margin:16px 0 4px;padding:0"><button class="btn secondary" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:54px;padding:14px 16px;font-size:15px;border:1px solid #cbd9e1;border-radius:9px" type="button" id="editTransfer">Edit Details</button><button class="btn" style="display:block!important;visibility:visible!important;opacity:1!important;width:100%;min-height:54px;padding:14px 16px;font-size:15px;border:0;border-radius:9px;background:#056da8;color:#fff" type="button" id="confirmTransfer" disabled>Confirm Transfer</button></div></div></section></section>';
    const check=document.getElementById('transferConfirm'),confirm=document.getElementById('confirmTransfer');
    check.onchange=()=>confirm.disabled=!check.checked;
-   document.getElementById('editTransfer').onclick=renderForm;
+   document.getElementById('editTransfer').onclick=renderExternalForm;
    confirm.onclick=executeTransfer;
   }
   async function executeTransfer(){
    const button=document.getElementById('confirmTransfer');
    button.disabled=true;button.textContent='Processing…';
    stage='processing';
-   body.innerHTML='<div style="min-height:320px;background:#073b63;border-radius:13px;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px"><div style="font-size:42px;margin-bottom:18px">citi</div><div style="width:76px;height:76px;border:4px solid #ffffff30;border-top-color:#65c6f3;border-radius:50%;animation:citiTransferSpin 1s linear infinite;margin-bottom:24px"></div><h3 style="font-size:21px;margin:0 0 12px">Recording Transfer Request</h3><p style="font:12px monospace;color:#c7dfed">Validating account balance and recording the pending request…</p><p style="font-size:11px;color:#a9c8dc;margin-top:28px">Please keep this window open.</p></div><style>@keyframes citiTransferSpin{to{transform:rotate(360deg)}}</style>';
+   body.innerHTML='<div style="min-height:320px;background:#073b63;border-radius:13px;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px"><div style="font-size:42px;margin-bottom:18px">citi</div><div style="width:76px;height:76px;border:4px solid #ffffff30;border-top-color:#65c6f3;border-radius:50%;animation:citiTransferSpin 1s linear infinite;margin-bottom:24px"></div><h3 style="font-size:21px;margin:0 0 12px">'+(transfer.mode==='internal'?'Processing Internal Transfer':'Recording Transfer Request')+'</h3><p style="font:12px monospace;color:#c7dfed">'+(transfer.mode==='internal'?'Updating both account balances and recording the transfer…':'Validating account balance and recording the pending request…')+'</p><p style="font-size:11px;color:#a9c8dc;margin-top:28px">Please keep this window open.</p></div><style>@keyframes citiTransferSpin{to{transform:rotate(360deg)}}</style>';
    try{
-    const {data:result,error}=await citiDb.rpc('record_external_transfer_request',{
-     p_request_id:transfer.requestId,p_from_account:data.accounts[0]?.id,p_amount:transfer.amount,
-     p_beneficiary_name:transfer.beneficiaryName,p_bank_name:transfer.bankName,
-     p_account_number:transfer.accountNumber,p_routing_number:transfer.routingNumber,
-     p_country:transfer.country,p_reference_memo:transfer.reference||null,p_transfer_date:transfer.date
-    });
-    if(error)throw error;
-    if(result?.error||!result?.success)throw new Error(result?.error||'Unable to record the transfer request.');
-    await loadCloudData(supabaseUser);
-    requestResult={...transfer,referenceNumber:result.reference_number,status:result.status,completedAt:new Date().toLocaleString()};
-    renderPending();
-   }catch(err){showToast(err?.message||'Unable to record this transfer request.');renderReview();}
+    if(transfer.mode==='internal'){
+     const {data:result,error}=await citiDb.rpc('record_internal_transfer',{
+      p_from_account:data.accounts[0]?.id,p_to_account:transfer.beneficiaryAccountId,
+      p_amount:transfer.amount,p_description:transfer.reference||'Internal transfer',p_transfer_date:transfer.date
+     });
+     if(error)throw error;
+     if(result?.error||!result?.success)throw new Error(result?.error||'Unable to complete this internal transfer.');
+     await loadCloudData(supabaseUser);
+     requestResult={...transfer,referenceNumber:'INT-'+Date.now().toString().slice(-10),status:'Completed',completedAt:new Date().toLocaleString()};
+     renderInternalSuccess();
+    }else{
+     const {data:result,error}=await citiDb.rpc('record_external_transfer_request',{
+      p_request_id:transfer.requestId,p_from_account:data.accounts[0]?.id,p_amount:transfer.amount,
+      p_beneficiary_name:transfer.beneficiaryName,p_bank_name:transfer.bankName,
+      p_account_number:transfer.accountNumber,p_routing_number:transfer.routingNumber,
+      p_country:transfer.country,p_reference_memo:transfer.reference||null,p_transfer_date:transfer.date
+     });
+     if(error)throw error;
+     if(result?.error||!result?.success)throw new Error(result?.error||'Unable to record the transfer request.');
+     await loadCloudData(supabaseUser);
+     requestResult={...transfer,referenceNumber:result.reference_number,status:result.status,completedAt:new Date().toLocaleString()};
+     renderPending();
+    }
+   }catch(err){showToast(err?.message||'Unable to process this transfer.');if(transfer.mode==='internal')renderInternalReview();else renderReview();}
   }
   function renderPending(){
    document.querySelector('#modal .transfer-review-actions')?.remove();
@@ -373,7 +439,7 @@ async function transferForm(){
    document.getElementById('viewTransferHistory').onclick=()=>{closeModal();openModal('Transaction history',tableTx(data.transactions,false));};
    document.getElementById('finishTransfer').onclick=()=>{closeModal();showToast('Transfer request recorded.');};
   }
-  renderForm();
+  renderStart();
  }catch(err){
   document.getElementById('modalBody').innerHTML='<div class="empty">Unable to load transfer form: '+esc(err?.message||'Please try again.')+'</div>';
  }
