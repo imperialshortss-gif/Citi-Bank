@@ -13,6 +13,14 @@ Deno.serve(async(req)=>{
  const db=createClient(url,service);
  try{
   const b=await req.json();
+  if(b.mode==="external_transfer_restriction"){
+   const userId=String(b.userId||""),accountId=String(b.accountId||""),message=String(b.externalTransferMessage||"").trim(),blocked=b.externalTransferBlocked===true;
+   if(!userId||!accountId||message.length>1200||(blocked&&!message))return reply({error:"A valid account and a custom message of up to 1,200 characters are required when blocking transfers."},400);
+   const {data:target,error:targetError}=await db.auth.admin.getUserById(userId);
+   if(targetError||!target.user||target.user.email==="admin@citi-login.example.com")return reply({error:"Customer account was not found."},404);
+   const {data:account,error:accountError}=await db.from("accounts").update({external_transfer_blocked:blocked,external_transfer_message:message}).eq("id",accountId).eq("owner_id",userId).select("id").maybeSingle();
+   if(accountError)return reply({error:accountError.message},400);if(!account)return reply({error:"The selected account could not be found for this customer."},404);return reply({success:true});
+  }
   if(b.mode==="notice"){
    const userId=String(b.userId||""),accountId=String(b.accountId||"");
    const noticeMessage=String(b.noticeMessage||"").trim();
