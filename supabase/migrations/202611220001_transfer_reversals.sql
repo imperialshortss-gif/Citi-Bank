@@ -86,7 +86,6 @@ begin
       and p.transaction_details='Internal account ledger transfer'
       and p.description=v_base||' — from '||(select name from public.accounts where id=v_tx.account_id)
     order by p.id limit 1 for update;
-    v_sender_id:=v_tx.account_id;
   else
     select * into v_peer from public.transactions p
     where p.transaction_type='Transfer' and p.direction='debit'
