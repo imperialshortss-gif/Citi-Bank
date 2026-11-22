@@ -51,7 +51,7 @@ create or replace function public.admin_list_transfer_transactions()
 returns table(
   id uuid, transaction_date date, description text, transaction_type text,
   account_id uuid, account_name text, owner_name text, amount numeric,
-  direction text, status text, transaction_details text
+  direction text, status text, transaction_details text, reversal_of uuid
 )
 language plpgsql
 security definer
@@ -64,7 +64,7 @@ begin
   return query
   select t.id,t.transaction_date,t.description,t.transaction_type,t.account_id,a.name,
     coalesce(u.raw_user_meta_data->>'fullName',u.raw_user_meta_data->>'username','Customer'),
-    t.amount,t.direction,coalesce(t.status,'posted'),t.transaction_details
+    t.amount,t.direction,coalesce(t.status,'posted'),t.transaction_details,t.reversal_of
   from public.transactions t
   join public.accounts a on a.id=t.account_id
   join auth.users u on u.id=t.owner_id
