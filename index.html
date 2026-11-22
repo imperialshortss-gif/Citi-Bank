@@ -189,7 +189,7 @@ function renderHome(){
  const cards=[['Current Balance',money(total()),'▣','blue'],['Monthly Deposits',money(deposits),'↗','green'],['Monthly Withdrawals',money(withdrawals),'↘','red'],['Total Transactions',data.transactions.length.toLocaleString(),'◷','purple']];
  document.getElementById('customerSummary').innerHTML=cards.map(c=>'<article class="customer-stat"><div class="customer-stat-icon '+c[3]+'">'+c[2]+'</div><div class="customer-stat-label">'+c[0]+'</div><div class="customer-stat-value">'+c[1]+'</div></article>').join('');
  const rows=data.transactions.slice(0,8);
- document.getElementById('recentActivity').innerHTML=rows.length?'<table class="customer-tx-table"><thead><tr><th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Account</th><th>Status</th></tr></thead><tbody>'+rows.map(t=>'<tr><td class="nowrap">'+esc(t.date)+'</td><td><strong>'+esc(t.description)+'</strong>'+'</td><td class="money-cell">'+(t.kind!=='credit'?'<span class="tx-debit">'+money(t.amount)+'</span>':'—')+'</td><td class="money-cell">'+(t.kind==='credit'?'<span class="tx-credit">'+money(t.amount)+'</span>':'—')+'</td><td>'+esc(account(t.accountId)?.name||'—')+'</td><td><span class="posted-pill">'+(t.status==='reversed'?'Reversed':t.status==='pending'?'Pending':'Recorded')+'</span></td></tr>').join('')+'</tbody></table>':'<div class="empty">No transactions to display.</div>';
+ document.getElementById('recentActivity').innerHTML=rows.length?'<table class="customer-tx-table"><thead><tr><th>Date</th><th>Description</th><th>Debit</th><th>Credit</th><th>Account</th><th>Status</th></tr></thead><tbody>'+rows.map(t=>'<tr><td class="nowrap">'+esc(t.date)+'</td><td><strong>'+esc(t.description)+'</strong>'+'</td><td class="money-cell">'+(t.kind!=='credit'?'<span class="tx-debit">'+money(t.amount)+'</span>':'—')+'</td><td class="money-cell">'+(t.kind==='credit'?'<span class="tx-credit">'+money(t.amount)+'</span>':'—')+'</td><td>'+esc(t.accountName||account(t.accountId)?.name||'—')+'</td><td><span class="posted-pill">'+(t.status==='reversed'?'Reversed':t.status==='pending'?'Pending':'Recorded')+'</span></td></tr>').join('')+'</tbody></table>':'<div class="empty">No transactions to display.</div>';
 }
 function renderAdmin(){
  document.getElementById('adminStats').innerHTML='<div class="stat"><small>Total balance</small><strong>'+money(total())+'</strong></div><div class="stat"><small>Accounts</small><strong>'+data.accounts.length+'</strong></div><div class="stat"><small>Transactions</small><strong>'+data.transactions.length+'</strong></div>';
@@ -204,7 +204,13 @@ function showCustomer(){document.getElementById('customerView').classList.add('h
 function showAdmin(){document.getElementById('customerView').classList.add('hidden');document.getElementById('adminView').classList.remove('hidden');document.getElementById('authView').classList.add('hidden');document.getElementById('siteHeader').classList.remove('hidden');document.getElementById('adminEntry').classList.add('hidden');renderAdmin()}
 function authScreen(){showCustomer();document.getElementById('authTitle').textContent='Admin login';document.getElementById('authDescription').textContent='Sign in with your administrator username and password.';document.getElementById('authSubmit').textContent='Admin Sign In';document.getElementById('authUser').value='admin';document.getElementById('authPass').value='';document.getElementById('createAdminAccess').classList.remove('hidden')}
 function loginEmail(username){return username.trim().toLowerCase()+'@citi-login.example.com'}
-async function connectAdmin(user){await loadCloudData(user);showAdmin();showToast('Signed in securely.')}
+async function connectAdmin(user){
+ await loadCloudData(user);
+ const {data:transferRows,error}=await citiDb.rpc('admin_list_transfer_transactions');
+ if(error)throw error;
+ data.transactions=(transferRows||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,accountName:t.account_name,ownerName:t.owner_name,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||'',status:t.status||'posted'}));
+ showAdmin();showToast('Signed in securely.');
+}
 async function connectCustomer(user){await loadCloudData(user);document.getElementById('authView').classList.add('hidden');document.getElementById('adminView').classList.add('hidden');document.getElementById('customerView').classList.remove('hidden');document.getElementById('siteHeader').classList.add('hidden');document.getElementById('adminEntry').classList.add('hidden');renderHome();}
 document.getElementById('authForm').addEventListener('submit',async e=>{e.preventDefault();const username=document.getElementById('authUser').value.trim(),pass=document.getElementById('authPass').value;if(!username||pass.length<8){showToast('Enter a username and a password of at least 8 characters.');return}
  const submit=document.getElementById('authSubmit');submit.disabled=true;
@@ -512,7 +518,11 @@ function removeTransaction(id){
   const btn=e.submitter;btn.disabled=true;btn.textContent='Reversing…';
   const {data:result,error}=await citiDb.rpc('admin_reverse_transfer',{p_transaction_id:id,p_reason:reason});
   if(error||result?.success!==true){showToast(error?.message||'Unable to reverse this transfer.');btn.disabled=false;btn.textContent='Confirm reversal';return;}
-  closeModal();await loadCloudData(supabaseUser);showToast('Transfer reversed. Account balances and history updated.');
+  closeModal();
+  const {data:transferRows,error:refreshError}=await citiDb.rpc('admin_list_transfer_transactions');
+  if(refreshError){showToast('Transfer reversed, but history could not refresh: '+refreshError.message);return;}
+  data.transactions=(transferRows||[]).map(t=>({id:t.id,date:t.transaction_date,description:t.description,type:t.transaction_type,accountId:t.account_id,accountName:t.account_name,ownerName:t.owner_name,amount:Number(t.amount),kind:t.direction,note:t.transaction_details||'',status:t.status||'posted'}));
+  renderAdmin();showToast('Transfer reversed. Account balances and history updated.');
  };
 }
 document.getElementById('saveUsername').onclick=()=>showToast('To change your username, create a new administrator login.');
