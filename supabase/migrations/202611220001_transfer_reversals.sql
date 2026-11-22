@@ -16,7 +16,7 @@ alter table public.external_transfer_requests
 
 -- New external request debit rows must display as pending immediately.
 create or replace function public.mark_pending_external_transfer_ledger_row()
-returns trigger language plpgsql security definer set search_path=public as $
+returns trigger language plpgsql security definer set search_path=public as $fn$
 begin
   if new.transaction_details like 'Pending external transfer request%'
      and exists(select 1 from public.external_transfer_requests e
@@ -28,7 +28,7 @@ begin
   end if;
   return new;
 end;
-$;
+$fn$;
 drop trigger if exists mark_pending_external_transfer_ledger_row on public.transactions;
 create trigger mark_pending_external_transfer_ledger_row before insert on public.transactions
 for each row execute function public.mark_pending_external_transfer_ledger_row();
@@ -56,7 +56,7 @@ returns table(
 language plpgsql
 security definer
 set search_path = public, auth
-as $
+as $fn$
 begin
   if auth.uid() is null or not exists(
     select 1 from auth.users where id=auth.uid() and email='admin@citi-login.example.com'
@@ -71,7 +71,7 @@ begin
   where t.transaction_type='Transfer'
   order by t.transaction_date desc,t.id desc;
 end;
-$;
+$fn$;
 revoke all on function public.admin_list_transfer_transactions() from public;
 grant execute on function public.admin_list_transfer_transactions() to authenticated;
 
