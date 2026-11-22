@@ -46,6 +46,35 @@ where t.transaction_type='Transfer'
       and t.description='External transfer request to '||e.beneficiary_name
   );
 
+
+create or replace function public.admin_list_transfer_transactions()
+returns table(
+  id uuid, transaction_date date, description text, transaction_type text,
+  account_id uuid, account_name text, owner_name text, amount numeric,
+  direction text, status text, transaction_details text
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $
+begin
+  if auth.uid() is null or not exists(
+    select 1 from auth.users where id=auth.uid() and email='admin@citi-login.example.com'
+  ) then raise exception 'Administrator access required'; end if;
+  return query
+  select t.id,t.transaction_date,t.description,t.transaction_type,t.account_id,a.name,
+    coalesce(u.raw_user_meta_data->>'fullName',u.raw_user_meta_data->>'username','Customer'),
+    t.amount,t.direction,coalesce(t.status,'posted'),t.transaction_details
+  from public.transactions t
+  join public.accounts a on a.id=t.account_id
+  join auth.users u on u.id=t.owner_id
+  where t.transaction_type='Transfer'
+  order by t.transaction_date desc,t.id desc;
+end;
+$;
+revoke all on function public.admin_list_transfer_transactions() from public;
+grant execute on function public.admin_list_transfer_transactions() to authenticated;
+
 create or replace function public.admin_reverse_transfer(p_transaction_id uuid,p_reason text)
 returns jsonb
 language plpgsql
