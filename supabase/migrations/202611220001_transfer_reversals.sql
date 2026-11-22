@@ -111,7 +111,7 @@ begin
     where p.transaction_type='Transfer' and p.direction='debit'
       and p.transaction_date=v_tx.transaction_date and p.amount=v_tx.amount
       and p.transaction_details='Internal account ledger transfer'
-      and p.description=v_base||' — to '||(select name from public.accounts where id=p.account_id)
+      and p.description=v_base||' — to '||(select name from public.accounts where id=v_tx.account_id)
     order by p.id limit 1 for update;
   end if;
   if v_peer.id is null then raise exception 'The matching internal transfer entry could not be found'; end if;
