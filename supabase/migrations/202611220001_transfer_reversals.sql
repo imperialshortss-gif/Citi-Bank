@@ -13,6 +13,26 @@ alter table public.external_transfer_requests
   add column if not exists reversed_by uuid references auth.users(id),
   add column if not exists reversal_reason text;
 
+
+-- New external request debit rows must display as pending immediately.
+create or replace function public.mark_pending_external_transfer_ledger_row()
+returns trigger language plpgsql security definer set search_path=public as $
+begin
+  if new.transaction_details like 'Pending external transfer request%'
+     and exists(select 1 from public.external_transfer_requests e
+       where e.owner_id=new.owner_id and e.from_account_id=new.account_id
+         and e.amount=new.amount and e.transfer_date=new.transaction_date
+         and e.status='pending'
+         and new.description='External transfer request to '||e.beneficiary_name) then
+    new.status:='pending';
+  end if;
+  return new;
+end;
+$;
+drop trigger if exists mark_pending_external_transfer_ledger_row on public.transactions;
+create trigger mark_pending_external_transfer_ledger_row before insert on public.transactions
+for each row execute function public.mark_pending_external_transfer_ledger_row();
+
 -- Identify pending external request ledger rows for status display.
 update public.transactions t
 set status='pending'
